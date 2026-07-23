@@ -19,6 +19,11 @@ public class GlobalExceptionHandler {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
 	}
 
+	@ExceptionHandler(BusinessRuleViolationException.class)
+	public ProblemDetail handleBusinessRuleViolation(BusinessRuleViolationException ex) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
