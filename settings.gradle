@@ -1,1 +1,6 @@
+plugins {
+	// Auto-provisions a JDK 21 if none is found locally (Gradle toolchain support).
+	id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'expense-settlement-service'
