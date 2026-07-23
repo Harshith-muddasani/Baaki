@@ -1,0 +1,5 @@
+# The Gradle wrapper must keep Unix line endings even when checked out on
+# Windows (core.autocrlf=true would otherwise corrupt the shebang line and
+# break `./gradlew` under git-bash, WSL, macOS, and Linux CI runners).
+gradlew text eol=lf
+*.jar binary
