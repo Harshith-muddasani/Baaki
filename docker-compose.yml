@@ -7,7 +7,9 @@ services:
       POSTGRES_USER: baaki
       POSTGRES_PASSWORD: baaki
     ports:
-      - "5432:5432"
+      # 5432 conflicts with another Postgres instance on this host (WSL2) -
+      # mapped to a non-default host port instead.
+      - "55432:5432"
     volumes:
       - baaki-postgres-data:/var/lib/postgresql
     healthcheck:
@@ -20,7 +22,9 @@ services:
     image: redis:8-alpine
     container_name: baaki-redis
     ports:
-      - "6379:6379"
+      # 6379 conflicts with another Redis instance on this host (WSL2) -
+      # mapped to a non-default host port instead.
+      - "56379:6379"
     volumes:
       - baaki-redis-data:/data
     healthcheck:

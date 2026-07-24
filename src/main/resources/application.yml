@@ -3,7 +3,7 @@ spring:
     name: expense-settlement-service
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/baaki}
+    url: ${DB_URL:jdbc:postgresql://localhost:55432/baaki}
     username: ${DB_USERNAME:baaki}
     password: ${DB_PASSWORD:baaki}
 
