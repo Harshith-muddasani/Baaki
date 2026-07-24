@@ -214,6 +214,57 @@ class ExpenseSettlementServiceApplicationIT {
 	}
 
 	@Test
+	void settlingAFullDebtBringsBothBalancesToZero() {
+		Long userA = createUser("Mallory", "mallory@example.com").id();
+		Long userB = createUser("Niaj", "niaj@example.com").id();
+
+		GroupResponse group = restTestClient.post().uri("/groups")
+				.body(new CreateGroupRequest("Full Settle", userA))
+				.exchange().expectStatus().isCreated().expectBody(GroupResponse.class).returnResult().getResponseBody();
+		Long groupId = group.id();
+		addMember(groupId, userB);
+
+		// A fronts 1000, split equally -> A is owed 500 by B
+		restTestClient.post().uri("/groups/{groupId}/expenses", groupId)
+				.body(new CreateExpenseRequest(userA, "Big one", 1000L, "INR", SplitType.EQUAL,
+						List.of(new SplitParticipantRequest(userA, null, null, null),
+								new SplitParticipantRequest(userB, null, null, null)),
+						userA))
+				.exchange()
+				.expectStatus().isCreated();
+
+		// B pays A 500 in cash to settle up - paidByUserId is whoever hands over
+		// the cash (B), paidToUserId is whoever receives it (A), matching plain
+		// English and matching expenses.paid_by's semantics.
+		restTestClient.post().uri("/groups/{groupId}/settlements", groupId)
+				.header("Idempotency-Key", UUID.randomUUID().toString())
+				.body(new CreateSettlementRequest(userB, userA, 500L))
+				.exchange()
+				.expectStatus().isCreated();
+
+		BalanceResponse[] balances = restTestClient.get().uri("/groups/{groupId}/balances", groupId)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(BalanceResponse[].class)
+				.returnResult()
+				.getResponseBody();
+		Map<Long, Long> balanceByUser = Arrays.stream(balances)
+				.collect(Collectors.toMap(BalanceResponse::userId, BalanceResponse::netBalance));
+
+		assertThat(balanceByUser.get(userA)).isEqualTo(0L);
+		assertThat(balanceByUser.get(userB)).isEqualTo(0L);
+
+		SettlementSuggestionResponse[] suggestions = restTestClient.get()
+				.uri("/groups/{groupId}/settlements/suggestions", groupId)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(SettlementSuggestionResponse[].class)
+				.returnResult()
+				.getResponseBody();
+		assertThat(suggestions).isEmpty();
+	}
+
+	@Test
 	void rejectsSettlementWithoutIdempotencyKeyHeader() {
 		Long userA = createUser("Frank", "frank@example.com").id();
 		Long userB = createUser("Grace", "grace2@example.com").id();
