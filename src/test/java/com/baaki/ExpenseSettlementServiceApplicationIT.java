@@ -9,6 +9,7 @@ import com.baaki.dto.group.CreateGroupRequest;
 import com.baaki.dto.group.GroupResponse;
 import com.baaki.dto.groupmember.AddGroupMemberRequest;
 import com.baaki.dto.groupmember.GroupMemberResponse;
+import com.baaki.dto.settlement.SettlementSuggestionResponse;
 import com.baaki.dto.user.CreateUserRequest;
 import com.baaki.dto.user.UserResponse;
 import com.baaki.entity.SplitType;
@@ -132,6 +133,20 @@ class ExpenseSettlementServiceApplicationIT {
 		assertThat(balanceByUser.get(userA)).isEqualTo(200L);
 		assertThat(balanceByUser.get(userB)).isEqualTo(-100L);
 		assertThat(balanceByUser.get(userC)).isEqualTo(-100L);
+
+		SettlementSuggestionResponse[] suggestions = restTestClient.get()
+				.uri("/groups/{groupId}/settlements/suggestions", groupId)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(SettlementSuggestionResponse[].class)
+				.returnResult()
+				.getResponseBody();
+
+		// B and C each owe A 100 - two transactions, both settling to A
+		assertThat(suggestions).hasSize(2);
+		assertThat(suggestions).allMatch(s -> s.toUserId().equals(userA) && s.amount() == 100L);
+		assertThat(Arrays.stream(suggestions).map(SettlementSuggestionResponse::fromUserId).toList())
+				.containsExactlyInAnyOrder(userB, userC);
 	}
 
 	private void addMember(Long groupId, Long userId) {
