@@ -33,5 +33,18 @@ out/
 .env
 *.env.local
 
-### Logs ###
+### Docker ###
+# personal port remaps / local overrides - not shared (see docker-compose.yml
+# for why this project needed one: a local WSL2 Postgres/Redis conflict)
+docker-compose.override.yml
+
+### Logs / crash dumps ###
 *.log
+hs_err_pid*.log
+replay_pid*.log
+
+### OS junk ###
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
