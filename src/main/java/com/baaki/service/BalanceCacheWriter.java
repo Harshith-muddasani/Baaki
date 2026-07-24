@@ -10,6 +10,7 @@ import com.baaki.repository.GroupRepository;
 import com.baaki.repository.UserBalanceProjection;
 import com.baaki.repository.UserRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -38,7 +39,11 @@ class BalanceCacheWriter {
 		this.userRepository = userRepository;
 	}
 
-	@Transactional
+	// REQUIRES_NEW, not the default REQUIRED: this runs from an AFTER_COMMIT
+	// listener where the outer transaction has just finished, and relying on
+	// ambiguous propagation there is a known Spring gotcha - force a
+	// genuinely fresh transaction every time.
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	void writeOnce(Long groupId) {
 		List<UserBalanceProjection> liveBalances = balanceRepository.computeBalances(groupId);
 		Group groupRef = groupRepository.getReferenceById(groupId);
