@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -19,7 +21,7 @@ import java.time.OffsetDateTime;
  * persisted except {@code deleted}, which can only move false -> true via
  * {@link #softDelete()}. There is deliberately no setter for anything else and
  * no update endpoint on top of this entity: correcting a mistake means adding
- * a new expense, not mutating history (see spec §3.1).
+ * a new expense, not mutating history (see spec Section 3.1).
  */
 @Entity
 @Table(name = "expenses")
@@ -44,6 +46,9 @@ public class Expense {
 	@Column(name = "total_amount", nullable = false, updatable = false)
 	private long totalAmount;
 
+	// CHAR(3) in the schema, not VARCHAR - JdbcTypeCode tells Hibernate to
+	// expect/generate CHAR so schema validation matches the real column type.
+	@JdbcTypeCode(SqlTypes.CHAR)
 	@Column(nullable = false, length = 3, updatable = false)
 	private String currency;
 
