@@ -1,17 +1,16 @@
 package com.baaki.dto.expense;
 
 import com.baaki.entity.SplitType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-/**
- * No split-related fields yet (per-user shares, etc) - split calculation is
- * Week 2 (§5.1). This only captures the raw ledger row; expense_splits rows
- * are not written by this endpoint yet.
- */
+import java.util.List;
+
 public record CreateExpenseRequest(
 		@NotNull(message = "paidByUserId is required")
 		Long paidByUserId,
@@ -30,6 +29,10 @@ public record CreateExpenseRequest(
 
 		@NotNull(message = "splitType is required")
 		SplitType splitType,
+
+		@NotEmpty(message = "participants must not be empty")
+		@Valid
+		List<SplitParticipantRequest> participants,
 
 		@NotNull(message = "createdByUserId is required")
 		Long createdByUserId

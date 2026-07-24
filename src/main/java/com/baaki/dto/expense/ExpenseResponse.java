@@ -1,9 +1,11 @@
 package com.baaki.dto.expense;
 
 import com.baaki.entity.Expense;
+import com.baaki.entity.ExpenseSplit;
 import com.baaki.entity.SplitType;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public record ExpenseResponse(
 		Long id,
@@ -15,10 +17,11 @@ public record ExpenseResponse(
 		SplitType splitType,
 		Long createdByUserId,
 		OffsetDateTime createdAt,
-		boolean deleted
+		boolean deleted,
+		List<ExpenseSplitResponse> splits
 ) {
 
-	public static ExpenseResponse from(Expense expense) {
+	public static ExpenseResponse from(Expense expense, List<ExpenseSplit> splits) {
 		return new ExpenseResponse(
 				expense.getId(),
 				expense.getGroup().getId(),
@@ -29,6 +32,7 @@ public record ExpenseResponse(
 				expense.getSplitType(),
 				expense.getCreatedBy().getId(),
 				expense.getCreatedAt(),
-				expense.isDeleted());
+				expense.isDeleted(),
+				splits.stream().map(ExpenseSplitResponse::from).toList());
 	}
 }
