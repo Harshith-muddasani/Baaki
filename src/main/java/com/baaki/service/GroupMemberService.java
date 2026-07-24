@@ -4,6 +4,7 @@ import com.baaki.entity.Group;
 import com.baaki.entity.GroupMember;
 import com.baaki.entity.GroupMemberId;
 import com.baaki.entity.User;
+import com.baaki.exception.BusinessRuleViolationException;
 import com.baaki.exception.DuplicateResourceException;
 import com.baaki.exception.ResourceNotFoundException;
 import com.baaki.repository.GroupMemberRepository;
@@ -49,5 +50,15 @@ public class GroupMemberService {
 			throw new ResourceNotFoundException("User " + userId + " is not a member of group " + groupId);
 		}
 		groupMemberRepository.deleteById(id);
+	}
+
+	/** Shared by ExpenseService and SettlementService - both need "is this user actually in the group". */
+	@Transactional(readOnly = true)
+	public User requireGroupMember(Long groupId, Long userId) {
+		User user = userService.getUser(userId);
+		if (!groupMemberRepository.existsByGroup_IdAndUser_Id(groupId, userId)) {
+			throw new BusinessRuleViolationException("User " + userId + " is not a member of group " + groupId);
+		}
+		return user;
 	}
 }
