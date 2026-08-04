@@ -1,0 +1,8 @@
+frontend
+.git
+.gradle
+build
+*.md
+docs
+observability
+.github
