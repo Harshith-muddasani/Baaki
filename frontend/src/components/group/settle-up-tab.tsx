@@ -28,8 +28,7 @@ import {
   settlementsApi,
   getErrorMessage,
 } from '@/lib/api'
-import { formatMoney, rupeesToMinorUnits } from '@/lib/format'
-import { UserAvatar } from '@/components/user-avatar'
+import { rupeesToMinorUnits } from '@/lib/format'
 import { SettlementGraph } from '@/components/group/settlement-graph'
 import type { SettlementSuggestionResponse } from '@/lib/types'
 
@@ -173,37 +172,13 @@ export function SettleUpTab({ groupId }: { groupId: number }) {
         {suggestionsQuery.isLoading && <Skeleton className="h-20 rounded-xl" />}
 
         {suggestionsQuery.isSuccess && (
-          <SettlementGraph suggestions={suggestionsQuery.data} nameOf={nameOf} />
+          <SettlementGraph
+            suggestions={suggestionsQuery.data}
+            nameOf={nameOf}
+            onSettle={handleRecordSuggestion}
+            settling={recordSettlement.isPending}
+          />
         )}
-
-        {/* Compact actionable list */}
-        <div className="space-y-1.5">
-          {suggestionsQuery.data?.map((suggestion, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between rounded-lg border border-border/30 bg-muted/5 p-2.5 hover:bg-muted/15 transition-colors"
-            >
-              <div className="flex items-center gap-2 text-xs">
-                <UserAvatar name={nameOf(suggestion.fromUserId)} seed={suggestion.fromUserId} size="sm" />
-                <span className="font-semibold text-foreground">{nameOf(suggestion.fromUserId)}</span>
-                <span className="text-muted-foreground">→</span>
-                <UserAvatar name={nameOf(suggestion.toUserId)} seed={suggestion.toUserId} size="sm" />
-                <span className="font-semibold text-foreground">{nameOf(suggestion.toUserId)}</span>
-                <span className="ml-1 tabular-nums font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-full text-[11px]">
-                  {formatMoney(suggestion.amount)}
-                </span>
-              </div>
-              <Button
-                size="sm"
-                className="font-semibold rounded-lg h-7 px-2.5 text-[11px]"
-                onClick={() => handleRecordSuggestion(suggestion)}
-                disabled={recordSettlement.isPending}
-              >
-                Settle
-              </Button>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   )

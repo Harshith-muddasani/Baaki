@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { CATEGORIES, type ExpenseCategory } from '@/lib/category'
+import { CATEGORIES, detectCategory, type ExpenseCategory } from '@/lib/category'
 import { formatMoney } from '@/lib/format'
 import type { ExpenseResponse } from '@/lib/types'
 
@@ -24,7 +24,7 @@ export function SpendingChart({ expenses, type = 'donut' }: SpendingChartProps) 
   const categoryData = useMemo(() => {
     const map = new Map<ExpenseCategory, number>()
     for (const exp of expenses) {
-      const cat = (exp as ExpenseResponse & { category?: ExpenseCategory }).category || 'OTHER'
+      const cat = detectCategory(exp.description)
       map.set(cat, (map.get(cat) || 0) + exp.totalAmount)
     }
     return Array.from(map.entries()).map(([cat, amount]) => {
@@ -138,12 +138,18 @@ export function SpendingChart({ expenses, type = 'donut' }: SpendingChartProps) 
         </ResponsiveContainer>
       </div>
 
-      <div className="grid flex-1 grid-cols-2 gap-2 text-xs">
+      {/* auto-fit (not a viewport breakpoint) because this chart is embedded at very
+          different widths - a narrow dashboard sidebar card vs. a wide analytics tab -
+          and column count needs to track the actual available space, not the viewport */}
+      <div
+        className="grid flex-1 gap-2 text-xs"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}
+      >
         {categoryData.map((item, i) => (
-          <div key={i} className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-muted/40 transition-colors">
+          <div key={i} className="flex min-w-0 items-center gap-2 rounded-lg p-1.5 hover:bg-muted/40 transition-colors">
             <span className="size-2.5 shrink-0 rounded-full" style={{ background: item.color }} />
-            <span className="truncate text-muted-foreground">{item.name}</span>
-            <span className="ml-auto font-semibold tabular-nums text-foreground">
+            <span className="min-w-0 flex-1 truncate text-muted-foreground">{item.name}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-foreground">
               {formatMoney(Math.round(item.value * 100))}
             </span>
           </div>
