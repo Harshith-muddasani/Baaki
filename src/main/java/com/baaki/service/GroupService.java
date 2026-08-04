@@ -42,7 +42,10 @@ public class GroupService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<Group> listGroups() {
+	public List<Group> listGroups(Long memberUserId) {
+		if (memberUserId != null) {
+			return groupRepository.findByMemberUserId(memberUserId);
+		}
 		return groupRepository.findAll();
 	}
 

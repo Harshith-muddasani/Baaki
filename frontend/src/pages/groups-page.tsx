@@ -26,7 +26,11 @@ export function GroupsPage() {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
-  const groupsQuery = useQuery({ queryKey: ['groups'], queryFn: groupsApi.list })
+  const groupsQuery = useQuery({
+    queryKey: ['groups', currentUser?.id],
+    queryFn: () => groupsApi.list(currentUser!.id),
+    enabled: !!currentUser,
+  })
 
   const groups = (groupsQuery.data ?? []).filter((g) =>
     g.name.toLowerCase().includes(search.toLowerCase()),

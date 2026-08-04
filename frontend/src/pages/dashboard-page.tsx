@@ -17,7 +17,11 @@ import { cn } from '@/lib/utils'
 export function DashboardPage() {
   const { currentUser } = useAuth()
 
-  const groupsQuery = useQuery({ queryKey: ['groups'], queryFn: groupsApi.list })
+  const groupsQuery = useQuery({
+    queryKey: ['groups', currentUser?.id],
+    queryFn: () => groupsApi.list(currentUser!.id),
+    enabled: !!currentUser,
+  })
   const groups = groupsQuery.data ?? []
 
   const balanceQueries = useQueries({

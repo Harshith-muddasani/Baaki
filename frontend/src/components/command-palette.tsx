@@ -22,9 +22,13 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void
 }) {
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { currentUser, logout } = useAuth()
 
-  const groupsQuery = useQuery({ queryKey: ['groups'], queryFn: groupsApi.list, enabled: open })
+  const groupsQuery = useQuery({
+    queryKey: ['groups', currentUser?.id],
+    queryFn: () => groupsApi.list(currentUser!.id),
+    enabled: open && !!currentUser,
+  })
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

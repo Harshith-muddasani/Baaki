@@ -37,7 +37,12 @@ export const usersApi = {
 export const groupsApi = {
   create: (body: { name: string; createdByUserId: number }) =>
     api.post<GroupResponse>('/groups', body).then((r) => r.data),
-  list: () => api.get<GroupResponse[]>('/groups').then((r) => r.data),
+  /** Omitting memberUserId lists every group system-wide - callers should
+   *  always scope this to the current user unless that's genuinely intended. */
+  list: (memberUserId?: number) =>
+    api
+      .get<GroupResponse[]>('/groups', { params: memberUserId ? { memberUserId } : undefined })
+      .then((r) => r.data),
   get: (id: number) => api.get<GroupResponse>(`/groups/${id}`).then((r) => r.data),
 }
 
