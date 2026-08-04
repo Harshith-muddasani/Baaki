@@ -1,5 +1,6 @@
 package com.baaki.service;
 
+import com.baaki.entity.BalanceCacheId;
 import com.baaki.entity.Group;
 import com.baaki.entity.GroupMember;
 import com.baaki.entity.GroupMemberId;
@@ -7,6 +8,7 @@ import com.baaki.entity.User;
 import com.baaki.exception.BusinessRuleViolationException;
 import com.baaki.exception.DuplicateResourceException;
 import com.baaki.exception.ResourceNotFoundException;
+import com.baaki.repository.BalanceCacheRepository;
 import com.baaki.repository.GroupMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +19,14 @@ import java.util.List;
 public class GroupMemberService {
 
 	private final GroupMemberRepository groupMemberRepository;
+	private final BalanceCacheRepository balanceCacheRepository;
 	private final GroupService groupService;
 	private final UserService userService;
 
-	public GroupMemberService(GroupMemberRepository groupMemberRepository, GroupService groupService,
-			UserService userService) {
+	public GroupMemberService(GroupMemberRepository groupMemberRepository, BalanceCacheRepository balanceCacheRepository,
+			GroupService groupService, UserService userService) {
 		this.groupMemberRepository = groupMemberRepository;
+		this.balanceCacheRepository = balanceCacheRepository;
 		this.groupService = groupService;
 		this.userService = userService;
 	}
@@ -50,6 +54,11 @@ public class GroupMemberService {
 			throw new ResourceNotFoundException("User " + userId + " is not a member of group " + groupId);
 		}
 		groupMemberRepository.deleteById(id);
+		// Keep balance_cache's row count in sync with real membership - otherwise
+		// a leftover row for a removed member would permanently mismatch
+		// BalanceService's cache-completeness check and force every future read
+		// onto the live-compute fallback for this group.
+		balanceCacheRepository.deleteById(new BalanceCacheId(groupId, userId));
 	}
 
 	/** Shared by ExpenseService and SettlementService - both need "is this user actually in the group". */
