@@ -22,10 +22,15 @@ spring:
     # excluded from the Testcontainers IT test's Flyway locations (see
     # @TestPropertySource on ExpenseSettlementServiceApplicationIT) so every
     # test run's fresh Postgres doesn't pay to insert it on every run.
-    locations: classpath:db/migration,classpath:db/loadtest
+    # FLYWAY_LOCATIONS is overridden to just classpath:db/migration on the
+    # deployed instance - the load-test dataset is dev-only benchmarking
+    # data (docs/benchmarks.md), not something a public demo should carry.
+    locations: ${FLYWAY_LOCATIONS:classpath:db/migration,classpath:db/loadtest}
 
 server:
-  port: ${SERVER_PORT:8080}
+  # Most PaaS (Railway included) inject $PORT and expect the app to bind to
+  # it; SERVER_PORT still wins if explicitly set, for local/other deploys.
+  port: ${SERVER_PORT:${PORT:8080}}
 
 management:
   endpoints:
@@ -52,7 +57,10 @@ otel:
   service:
     name: expense-settlement-service
   traces:
-    exporter: zipkin
+    # No Zipkin instance is deployed alongside the demo - set
+    # OTEL_TRACES_EXPORTER=none there instead of letting every span export
+    # fail silently against an unreachable localhost endpoint.
+    exporter: ${OTEL_TRACES_EXPORTER:zipkin}
     sampler: always_on # 100% in dev; a real prod deployment would sample well below this
   exporter:
     zipkin:

@@ -1,3 +1,172 @@
+# Baaki — Resume Positioning Guide (v2, scoped)
+
+> Supersedes the v1 24-phase plan below this line only in *scope* — the v1
+> draft is kept as a record of what was considered and deliberately cut.
+> This version is written to be actually finishable by one person, and to
+> survive a skeptical 45-minute interviewer at a top product company,
+> rather than to maximize the number of technologies listed.
+
+## The one rule everything else follows
+
+`docs/expense-settlement-app-tech-spec.md` §2/§7/§8 already state the
+project's real thesis: the skill being tested is knowing **when**
+complexity is warranted, not defaulting to maximum complexity. A resume
+project that lists more technologies than its owner can defend for 20
+minutes each reads as buzzword-stuffing to anyone who has actually
+operated production systems — and that's exactly who interviews at top
+PBCs/MNCs. v1 of this doc (Kafka + Redis + S3 + Elasticsearch + full OAuth
++ CQRS + Saga + sharding + canary + circuit breakers, all for a project
+with no real traffic) violated that rule everywhere. This version doesn't.
+
+Depth on 3-4 axes, each with a real story and real numbers, beats breadth
+across 20 buzzwords every time an interviewer actually probes.
+
+Real users are explicitly **not** in scope — this is a portfolio piece,
+not a product launch. That changes Week 5's goal from "deploy + onboard
+real users" to "deploy to a reachable URL, demoed with seed data."
+
+## Where the project already stands
+
+This is more than it looks like from the outside — don't undersell it in
+an interview:
+
+- **Ledger design + all 4 split types**, rounding-safe, with the
+  deterministic remainder rule, fully tested (`SplitCalculatorTest`).
+- **Greedy debt-simplification** (two-heap, O(n log n), ≤ n−1
+  transactions), tested against the adversarial cases (cycles, mega-debtor,
+  everyone-owes-everyone) plus a full end-to-end 4-person scenario through
+  the real API.
+- **Idempotency done properly**: unique-constraint race handling, a true
+  concurrent-duplicate-request test (not just sequential retry), and a
+  real bug found and fixed — idempotency keys are globally unique but
+  weren't checked against the requesting group, so key reuse across groups
+  silently returned the wrong group's settlement.
+- **Optimistic locking with retry** on the balance cache, plus (new) an
+  actual cache **read-through path** with a correctness-verified fallback
+  for cold/partial caches — the cache existed for a while as pure
+  write-only dead weight before this was wired up. That "found it was
+  dead weight, fixed the read path, verified the fix with tests" story is
+  itself a good interview answer.
+- **Real, measured performance work**: `docs/benchmarks.md` — FK indexing
+  (4.4x), cache read-through on top of that (42x), against a dedicated
+  650k-row load-test dataset kept isolated from both the demo data and the
+  test suite. Numbers weren't invented; they're `EXPLAIN ANALYZE` output
+  against production queries. Keep doing this — see the note on Redis below.
+- **Observability that's actually wired**: OpenTelemetry traces → Zipkin,
+  Prometheus metrics via Micrometer, structured JSON logs — not just
+  present in a dependency list.
+- **56 backend tests** covering unit, algorithm-adversarial, and full
+  Testcontainers-backed integration levels, including membership-boundary
+  and cross-group edge cases most CRUD demos never touch.
+- A functioning frontend with real seed data, realistic enough to demo
+  cold in an interview without narrating around empty screens.
+
+## What's actually left, in priority order
+
+Do these in order — each one is cheap relative to its interview value,
+and the order front-loads the highest leverage-per-hour work.
+
+**1. Write the README.** This is the single highest-leverage remaining
+task and it's almost entirely writing, not building. It needs: what this
+is and isn't (open with the §2 monolith-deliberately framing), the
+architecture diagram, the §7 trade-offs table verbatim (ledger vs.
+mutable balance, greedy vs. optimal debt simplification, sync vs. async
+settlement, monolith vs. microservices, SQL vs. NoSQL), the
+`docs/benchmarks.md` numbers folded in or linked, how to run it locally,
+and the live demo link once step 2 is done. This is the artifact an
+interviewer actually reads before the call — it does half the selling for
+you before you say a word.
+
+**2. Deploy it.** Railway or Render (free tier) for the app, a managed
+Postgres (Neon/Supabase), Redis Cloud free tier if Redis survives step 4.
+Per tech-spec §11. No real-user onboarding — the seed data *is* the demo.
+Smoke-test every tab after deploy (cold start, migrations applying
+cleanly against a fresh managed Postgres is itself worth verifying, not
+assuming).
+
+**3. Kafka notification service — scoped exactly as tech-spec §14, not
+wider.** One topic (`ledger-events`, partitioned by `groupId`), `AFTER_COMMIT`
+publish, a genuinely separate small consumer service, idempotent
+consumption via a `processed_events` table, a dead-letter topic. This is
+the one piece of real distributed-systems story currently missing, and
+it's pre-justified with a real reason (notifications are fire-and-forget,
+tolerant of async decoupling — unlike the ledger writes, which stay
+synchronous on purpose). Resist the urge to add more event types or
+consumers than the notification use case actually needs.
+
+**4. Decide Redis's fate — don't leave it running unused.** Right now
+it's provisioned in `docker-compose.yml` with zero application code
+touching it. An interviewer who asks "walk me through your Redis usage"
+and gets "it's not actually used" is a bad moment to have manufactured
+for yourself. Two legitimate options, pick one:
+   - **Use it narrowly for something Postgres doesn't already cover**:
+     a Redis-backed fast-path check on the idempotency key (avoid a DB
+     round-trip for the common "client retried the same request" case)
+     is the one addition that directly extends the idempotency story
+     already built, rather than bolting on something unrelated.
+   - **Remove it and say so in the README.** "Considered Redis for the
+     balance cache; Postgres's `balance_cache` table already served
+     that need with a simpler operational footprint, so I didn't add
+     infra for infra's sake" is a *stronger* answer than a token Redis
+     integration — it's the same engineering-judgment story the whole
+     project is built around, applied to itself.
+
+**5. (Optional, do last, only if time remains) Minimal real auth.**
+The fake/local-storage auth is explicitly fine per tech-spec §1 ("keep
+auth minimal — this isn't the point of the project"), and a full
+register/login/JWT/refresh-rotation/OAuth/email-verification/
+account-locking stack (v1's Phase 2) adds a large surface area to get
+right for a topic this project isn't actually about. If there's spare
+time after 1-4, a bare JWT login (no refresh rotation, no OAuth, no email
+flows) replacing the fake auth is a reasonable bounded addition. It is
+not worth delaying deployment or the README for.
+
+## Explicit non-goals — put these in the README's "Future Improvements," never build them
+
+S3/receipt storage, Elasticsearch/search, full OAuth + email-verification +
+account-locking, CQRS, Saga, read replicas, sharding, feature flags,
+blue-green/canary deployment, distributed locking, event replay,
+snapshotting, materialized views, circuit breakers, bulkheads, AI
+features (OCR, NL expense entry, auto-categorization). Naming these as
+*reasoned decisions not to build*, with one sentence each on why and what
+would change at 10x/100x scale, is worth more in an interview than a
+shallow attempt at any one of them — it's the same "why NOT X" judgment
+tech-spec §2 already argues is the actual skill being tested.
+
+## What this unlocks in an interview (only the parts that are real)
+
+| Topic | Where it lives |
+|---|---|
+| Ledger design, concurrency-safety by construction | tech-spec §3, §7 |
+| Idempotency + the cross-group key bug you found and fixed | `SettlementService`, `ExpenseSettlementServiceApplicationIT` |
+| Optimistic locking + cache read-through correctness | `BalanceCacheService`, `BalanceService`, `docs/benchmarks.md` |
+| Greedy algorithm design + NP-hardness reasoning | `DebtSimplifier`, tech-spec §5.3 |
+| Measured performance work (not invented numbers) | `docs/benchmarks.md` |
+| Observability | Zipkin traces, Prometheus metrics, structured logs |
+| Event-driven design, once §14's Kafka piece lands | tech-spec §14 |
+| Judgment about what *not* to build | this doc's non-goals list, README's Future Improvements |
+
+Every row above should be answerable from actual implementation, not
+theory — that's the bar, and right now most of this table already clears
+it.
+
+---
+---
+
+# v1 (superseded) — kept for the record of what was cut and why
+
+The original 24-phase draft below aimed at the full distributed-systems
+tech tree (Kafka with 6 event types, Redis with stampede/penetration/
+avalanche mitigation, full OAuth stack, S3, Elasticsearch, CQRS, Saga,
+sharding, canary deploys, circuit breakers, bulkheads) for a project with
+no real production traffic. Two things from it were genuinely good and
+were pulled into v2 above rather than discarded: **Phase 22** ("never
+invent metrics, measure everything" — now `docs/benchmarks.md`) and
+**Phase 23** (the production-mindset checklist — can this survive a
+DB/cache/broker outage, no-downtime deploys — worth reasoning through in
+the README even for pieces not built). Everything else is preserved
+as-is below purely as a record, not a plan to execute.
+
 # Baaki - Implementation Master Plan (Resume-Grade Backend Project)
 
 > Goal: Build a production-grade expense sharing platform that demonstrates backend engineering skills expected by top product companies (Amazon, Microsoft, Google, Uber, Atlassian, Walmart, Salesforce, etc.) in the AI era.
