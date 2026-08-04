@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { motion } from 'motion/react'
-import { ArrowRight, Search, Sparkles } from 'lucide-react'
+import { ArrowRight, Info, Search, Sparkles } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -127,6 +127,14 @@ export function LoginPage() {
             <p className="mt-1.5 text-xs text-muted-foreground">
               Demo mode — pick any existing user, no password required.
             </p>
+          </div>
+
+          <div className="flex items-start gap-2 rounded-lg border border-brand/20 bg-brand-soft/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+            <Info className="mt-0.5 size-3.5 shrink-0 text-brand" />
+            <span>
+              Backend runs on free-tier hosting — it sleeps when idle, so the
+              first request after a while can take up to 45s to wake up.
+            </span>
           </div>
 
           <Tabs defaultValue="signin" className="mt-6">
