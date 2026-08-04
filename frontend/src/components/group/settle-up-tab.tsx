@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowRight, CircleCheck, HandCoins } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import confetti from 'canvas-confetti'
+import { HandCoins } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import {
   Select,
   SelectContent,
@@ -29,6 +29,8 @@ import {
   getErrorMessage,
 } from '@/lib/api'
 import { formatMoney, rupeesToMinorUnits } from '@/lib/format'
+import { UserAvatar } from '@/components/user-avatar'
+import { SettlementGraph } from '@/components/group/settlement-graph'
 import type { SettlementSuggestionResponse } from '@/lib/types'
 
 export function SettleUpTab({ groupId }: { groupId: number }) {
@@ -51,11 +53,25 @@ export function SettleUpTab({ groupId }: { groupId: number }) {
     queryClient.invalidateQueries({ queryKey: ['groups', groupId, 'balances'] })
   }
 
+  const triggerCelebration = () => {
+    try {
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#6366f1', '#10b981', '#f59e0b', '#ec4899'],
+      })
+    } catch {
+      // Ignore if canvas unsupported
+    }
+  }
+
   const recordSettlement = useMutation({
     mutationFn: (body: { paidByUserId: number; paidToUserId: number; amount: number }) =>
       settlementsApi.create(groupId, body, crypto.randomUUID()),
     onSuccess: () => {
-      toast.success('Settlement recorded')
+      toast.success('Settlement recorded!')
+      triggerCelebration()
       invalidateAfterSettlement()
       setCustomOpen(false)
     },
@@ -80,102 +96,115 @@ export function SettleUpTab({ groupId }: { groupId: number }) {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="space-y-3 pt-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Suggested settlements</p>
-            <Dialog open={customOpen} onOpenChange={setCustomOpen}>
-              <DialogTrigger
-                render={
-                  <Button size="sm" variant="outline">
-                    <HandCoins /> Record a payment
-                  </Button>
-                }
-              />
-              <DialogContent>
-                <form action={handleCustomSubmit}>
-                  <DialogHeader>
-                    <DialogTitle>Record a settlement</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3 py-4">
-                    <div className="space-y-1.5">
-                      <Label>Paid by</Label>
-                      <Select name="paidByUserId" required>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Who paid?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {membersQuery.data?.map((m) => (
-                            <SelectItem key={m.userId} value={String(m.userId)}>
-                              {m.userName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Paid to</Label>
-                      <Select name="paidToUserId" required>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Who received it?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {membersQuery.data?.map((m) => (
-                            <SelectItem key={m.userId} value={String(m.userId)}>
-                              {m.userName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="amount">Amount (₹)</Label>
-                      <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" disabled={recordSettlement.isPending}>
-                      Record settlement
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {suggestionsQuery.isLoading && <Skeleton className="h-24" />}
-
-          {suggestionsQuery.isSuccess && suggestionsQuery.data.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-8 text-center text-muted-foreground">
-              <CircleCheck className="size-8 text-emerald-600" />
-              <p className="text-sm">Everyone's settled up.</p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {suggestionsQuery.data?.map((suggestion, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">{nameOf(suggestion.fromUserId)}</span>
-                  <ArrowRight className="size-4 text-muted-foreground" />
-                  <span className="font-medium">{nameOf(suggestion.toUserId)}</span>
-                  <span className="text-muted-foreground">{formatMoney(suggestion.amount)}</span>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => handleRecordSuggestion(suggestion)}
-                  disabled={recordSettlement.isPending}
-                >
-                  Mark as paid
+      <div className="rounded-xl border border-border/40 bg-card p-4 shadow-premium space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-foreground">Suggested Settlements</p>
+          <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+            <DialogTrigger
+              render={
+                <Button size="sm" variant="outline" className="font-semibold rounded-lg h-7 text-[11px] px-2.5">
+                  <HandCoins className="size-3 mr-0.5" /> Record payment
                 </Button>
+              }
+            />
+            <DialogContent className="sm:max-w-md rounded-xl border border-border/40 bg-card shadow-xl">
+              <form action={handleCustomSubmit}>
+                <DialogHeader>
+                  <DialogTitle className="text-base font-bold text-foreground">Record a settlement</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 py-3">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-foreground/70">Paid by</Label>
+                    <Select name="paidByUserId" required>
+                      <SelectTrigger className="w-full h-9 rounded-lg text-xs">
+                        <SelectValue placeholder="Who paid?" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-lg">
+                        {membersQuery.data?.map((m) => (
+                          <SelectItem key={m.userId} value={String(m.userId)}>
+                            {m.userName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-foreground/70">Paid to</Label>
+                    <Select name="paidToUserId" required>
+                      <SelectTrigger className="w-full h-9 rounded-lg text-xs">
+                        <SelectValue placeholder="Who received it?" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-lg">
+                        {membersQuery.data?.map((m) => (
+                          <SelectItem key={m.userId} value={String(m.userId)}>
+                            {m.userName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="amount" className="text-[11px] font-semibold text-foreground/70">Amount</Label>
+                    <InputGroup className="rounded-lg overflow-hidden">
+                      <InputGroupAddon className="bg-muted/50 font-bold text-xs">₹</InputGroupAddon>
+                      <InputGroupInput
+                        id="amount"
+                        name="amount"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="0.00"
+                        className="h-9 text-xs"
+                        required
+                      />
+                    </InputGroup>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={recordSettlement.isPending} className="font-semibold h-9 text-xs rounded-lg">
+                    Record settlement
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {suggestionsQuery.isLoading && <Skeleton className="h-20 rounded-xl" />}
+
+        {suggestionsQuery.isSuccess && (
+          <SettlementGraph suggestions={suggestionsQuery.data} nameOf={nameOf} />
+        )}
+
+        {/* Compact actionable list */}
+        <div className="space-y-1.5">
+          {suggestionsQuery.data?.map((suggestion, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between rounded-lg border border-border/30 bg-muted/5 p-2.5 hover:bg-muted/15 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-xs">
+                <UserAvatar name={nameOf(suggestion.fromUserId)} seed={suggestion.fromUserId} size="sm" />
+                <span className="font-semibold text-foreground">{nameOf(suggestion.fromUserId)}</span>
+                <span className="text-muted-foreground">→</span>
+                <UserAvatar name={nameOf(suggestion.toUserId)} seed={suggestion.toUserId} size="sm" />
+                <span className="font-semibold text-foreground">{nameOf(suggestion.toUserId)}</span>
+                <span className="ml-1 tabular-nums font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-full text-[11px]">
+                  {formatMoney(suggestion.amount)}
+                </span>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <Button
+                size="sm"
+                className="font-semibold rounded-lg h-7 px-2.5 text-[11px]"
+                onClick={() => handleRecordSuggestion(suggestion)}
+                disabled={recordSettlement.isPending}
+              >
+                Settle
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
