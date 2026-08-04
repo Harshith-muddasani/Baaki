@@ -7,6 +7,8 @@ import com.baaki.exception.BusinessRuleViolationException;
 import com.baaki.service.SettlementOutcome;
 import com.baaki.service.SettlementService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/groups/{groupId}/settlements")
 public class SettlementController {
+
+	private static final Logger log = LoggerFactory.getLogger(SettlementController.class);
 
 	private final SettlementService settlementService;
 
@@ -47,13 +51,22 @@ public class SettlementController {
 			// Another concurrent request with the same key won the insert race -
 			// createNewSettlement's transaction has already rolled back, so this
 			// runs in a fresh one.
-			settlement = settlementService.getByIdempotencyKeyOrThrow(idempotencyKey);
+			settlement = settlementService.getByIdempotencyKeyOrThrow(groupId, idempotencyKey);
 			newlyCreated = false;
 		}
 
 		var location = uriBuilder.path("/groups/{groupId}/settlements/{id}")
 				.buildAndExpand(groupId, settlement.getId()).toUri();
 		HttpStatus status = newlyCreated ? HttpStatus.CREATED : HttpStatus.OK;
+
+		if (newlyCreated) {
+			log.info("Settlement {} recorded in group {}: user {} paid user {} {} paise",
+					settlement.getId(), groupId, request.paidByUserId(), request.paidToUserId(), request.amount());
+		} else {
+			log.info("Settlement request for group {} replayed idempotency key {} - returning existing settlement {}",
+					groupId, idempotencyKey, settlement.getId());
+		}
+
 		return ResponseEntity.status(status).location(location).body(SettlementResponse.from(settlement));
 	}
 

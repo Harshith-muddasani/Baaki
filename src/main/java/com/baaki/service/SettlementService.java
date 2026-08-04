@@ -41,6 +41,7 @@ public class SettlementService {
 			UUID idempotencyKey) {
 		var existing = settlementRepository.findByIdempotencyKey(idempotencyKey);
 		if (existing.isPresent()) {
+			requireSameGroup(existing.get(), groupId, idempotencyKey);
 			return new SettlementOutcome(existing.get(), false);
 		}
 
@@ -65,9 +66,24 @@ public class SettlementService {
 	 * concurrent request won the race and already committed its row.
 	 */
 	@Transactional(readOnly = true)
-	public Settlement getByIdempotencyKeyOrThrow(UUID idempotencyKey) {
-		return settlementRepository.findByIdempotencyKey(idempotencyKey)
+	public Settlement getByIdempotencyKeyOrThrow(Long groupId, UUID idempotencyKey) {
+		Settlement settlement = settlementRepository.findByIdempotencyKey(idempotencyKey)
 				.orElseThrow(() -> new ResourceNotFoundException(
 						"No settlement found for idempotency key " + idempotencyKey + " after a conflicting write"));
+		requireSameGroup(settlement, groupId, idempotencyKey);
+		return settlement;
+	}
+
+	/**
+	 * idempotency_key is unique across the whole table, not per group (schema
+	 * Section 3.2) - without this check, a client that accidentally reuses a
+	 * key across two different groups would silently get back the wrong
+	 * group's settlement instead of an error.
+	 */
+	private static void requireSameGroup(Settlement existing, Long requestedGroupId, UUID idempotencyKey) {
+		if (!existing.getGroup().getId().equals(requestedGroupId)) {
+			throw new BusinessRuleViolationException(
+					"Idempotency key " + idempotencyKey + " was already used for a different group");
+		}
 	}
 }
