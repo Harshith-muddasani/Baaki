@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>trace_id</includeMdcKeyName>
+            <includeMdcKeyName>span_id</includeMdcKeyName>
+            <customFields>{"service":"expense-settlement-service"}</customFields>
+        </encoder>
+    </appender>
+
+    <!-- Reads the current thread's active OTel span (no explicit wiring or
+         install() call needed - it's purely context-propagation-based) and
+         injects trace_id/span_id into MDC before delegating to JSON, so
+         every log line inside a traced request is correlatable back to its
+         Zipkin trace, not just readable one line at a time. -->
+    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender">
+        <traceIdKey>trace_id</traceIdKey>
+        <spanIdKey>span_id</spanIdKey>
+        <appender-ref ref="JSON"/>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="OTEL"/>
+    </root>
+</configuration>
