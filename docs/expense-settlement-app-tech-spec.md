@@ -338,7 +338,7 @@ Postgres chosen — the data is inherently relational (users ↔ groups ↔ expe
 - [x] **Week 2:** Balance computation (§5.2) + rounding-safe split logic (§5.1) + unit tests
 - [x] **Week 3:** Debt-simplification algorithm (§5.3) + adversarial test cases
 - [x] **Week 4:** Idempotency (§6) + optimistic locking on cache (if implemented)
-- [ ] **Week 5:** Deploy + onboard real users + fix what breaks under real usage
+- [ ] **Week 5:** Deploy to a reachable URL (seed data as the demo, no real-user onboarding — see `docs/requirements-doc` v2) + fix what breaks post-deploy
 - [ ] **Week 6:** Observability (§10) + README (write §7's trade-offs explicitly) + finalize resume bullet
 - [ ] **Week 7 (v2):** Kafka topic setup + event producer in the monolith — see §14
 - [ ] **Week 8 (v2):** Notification consumer service + idempotent processing + dead-letter handling — see §14
