@@ -1,0 +1,1060 @@
+# Baaki - Implementation Master Plan (Resume-Grade Backend Project)
+
+> Goal: Build a production-grade expense sharing platform that demonstrates backend engineering skills expected by top product companies (Amazon, Microsoft, Google, Uber, Atlassian, Walmart, Salesforce, etc.) in the AI era.
+
+---
+
+# Vision
+
+Baaki is **NOT** a Splitwise clone.
+
+Baaki is a backend engineering showcase.
+
+Every feature should exist because it demonstrates an engineering concept:
+
+- scalability
+- concurrency
+- reliability
+- performance
+- security
+- distributed systems
+- production readiness
+
+The objective is that an interviewer can spend **45-60 minutes** discussing this single project.
+
+---
+
+# Primary Goals
+
+## Demonstrate
+
+- System Design
+- Backend Architecture
+- Clean Code
+- Database Design
+- Distributed Systems
+- Caching
+- Transactions
+- Performance Optimization
+- Concurrency
+- Observability
+- DevOps
+- Testing
+- Security
+
+NOT
+
+- fancy UI
+- animations
+- frontend tricks
+
+---
+
+# Tech Stack
+
+Backend
+
+- Java 21
+- Spring Boot
+- Spring Security
+- Spring Data JPA
+- PostgreSQL
+- Redis
+- Kafka
+- Docker
+
+Storage
+
+- AWS S3
+
+Authentication
+
+- JWT
+- Refresh Tokens
+- OAuth (Google)
+
+Monitoring
+
+- Prometheus
+- Grafana
+- OpenTelemetry
+
+Testing
+
+- JUnit
+- Mockito
+- Testcontainers
+- k6
+
+Deployment
+
+- Docker Compose
+- GitHub Actions
+
+Documentation
+
+- Swagger/OpenAPI
+
+---
+
+# Engineering Principles
+
+## Follow
+
+Clean Architecture
+
+Hexagonal Architecture (preferred)
+
+SOLID
+
+DRY
+
+KISS
+
+Dependency Injection
+
+Domain Driven Design (lightweight)
+
+Feature-based modular structure
+
+---
+
+# Phase 1 — Foundation
+
+Goal
+
+Create a production-ready foundation.
+
+Implement
+
+- project structure
+- logging
+- exception handling
+- validation
+- configuration
+- environment profiles
+- Docker
+- CI pipeline
+
+Skills Demonstrated
+
+- clean architecture
+- maintainability
+- enterprise coding standards
+
+---
+
+# Phase 2 — Authentication
+
+Implement
+
+User Registration
+
+Login
+
+Logout
+
+Refresh Tokens
+
+Refresh Token Rotation
+
+Forgot Password
+
+Reset Password
+
+Email Verification
+
+Google OAuth
+
+Profile Management
+
+Avatar Upload
+
+Password Change
+
+Security
+
+JWT
+
+BCrypt
+
+Refresh Token Revocation
+
+Rate Limiting
+
+Account Locking
+
+Email Verification Required
+
+Skills Demonstrated
+
+Authentication
+
+Authorization
+
+Security
+
+Session Management
+
+---
+
+# Phase 3 — Users & Groups
+
+Entities
+
+User
+
+Group
+
+Membership
+
+Invitation
+
+Features
+
+Create Group
+
+Invite Members
+
+Accept Invitation
+
+Reject Invitation
+
+Transfer Ownership
+
+Remove Member
+
+Leave Group
+
+Archive Group
+
+Delete Group
+
+Permissions
+
+Owner
+
+Admin
+
+Member
+
+RBAC
+
+Skills Demonstrated
+
+Authorization
+
+Database Design
+
+Relationship Modeling
+
+---
+
+# Phase 4 — Expense Engine
+
+Expense Types
+
+Equal
+
+Exact
+
+Percentage
+
+Shares
+
+Custom
+
+Expense Fields
+
+Title
+
+Description
+
+Category
+
+Receipt
+
+Currency
+
+Tags
+
+Expense Date
+
+Paid By
+
+Split Between
+
+Recurring
+
+Attachment
+
+Support
+
+Multiple Payers
+
+Multiple Currencies
+
+Expense Editing
+
+Expense Deletion
+
+Expense Version History
+
+Skills Demonstrated
+
+Complex Domain Modeling
+
+Validation
+
+Business Rules
+
+---
+
+# Phase 5 — Ledger System
+
+IMPORTANT
+
+Never store balances directly.
+
+Balances should be computed from ledger entries.
+
+Implement
+
+LedgerEntry
+
+Settlement
+
+Adjustment
+
+Transaction History
+
+Immutable Ledger
+
+Double Entry Style
+
+Benefits
+
+Complete Audit
+
+Historical Reconstruction
+
+Consistency
+
+Interview Topics
+
+Accounting Principles
+
+Event Sourcing Concepts
+
+Financial Systems
+
+---
+
+# Phase 6 — Balance Engine
+
+Implement
+
+Current Balance
+
+Net Balance
+
+Group Balance
+
+User Balance
+
+Historical Balance
+
+Balance Snapshot
+
+Optimization
+
+Incremental Balance Updates
+
+Caching
+
+Lazy Recalculation
+
+Skills
+
+Algorithms
+
+Performance
+
+Caching
+
+---
+
+# Phase 7 — Debt Simplification
+
+Implement
+
+Min Cash Flow Algorithm
+
+Graph Representation
+
+Priority Queue
+
+Greedy Algorithm
+
+Input
+
+A owes B
+
+B owes C
+
+C owes D
+
+Output
+
+A directly pays D
+
+Benefits
+
+Minimum Transactions
+
+Skills
+
+DSA
+
+Graphs
+
+Greedy
+
+Priority Queue
+
+---
+
+# Phase 8 — Transactions
+
+Every operation must be atomic.
+
+Expense Creation
+
+↓
+
+Ledger
+
+↓
+
+Participants
+
+↓
+
+Balance
+
+↓
+
+Audit
+
+↓
+
+Notification
+
+If one fails
+
+Everything rolls back.
+
+Skills
+
+Spring Transactions
+
+Database Consistency
+
+ACID
+
+---
+
+# Phase 9 — Concurrency
+
+Implement
+
+Optimistic Locking
+
+Version Columns
+
+Idempotency Keys
+
+Retry Logic
+
+Duplicate Prevention
+
+Concurrent Expense Edit Protection
+
+Concurrent Settlement Protection
+
+Skills
+
+Concurrency
+
+Consistency
+
+Distributed Systems
+
+---
+
+# Phase 10 — Redis
+
+Cache
+
+Group Summary
+
+Balances
+
+User Profile
+
+Frequently Used Expenses
+
+Cache Strategy
+
+Read Through
+
+Write Through
+
+TTL
+
+Cache Invalidation
+
+Cache Warming
+
+Prevent
+
+Cache Stampede
+
+Cache Penetration
+
+Cache Avalanche
+
+Skills
+
+Performance Engineering
+
+---
+
+# Phase 11 — Kafka
+
+Events
+
+ExpenseCreated
+
+ExpenseUpdated
+
+ExpenseDeleted
+
+SettlementCompleted
+
+UserInvited
+
+NotificationRequested
+
+Consumers
+
+Notification
+
+Analytics
+
+Audit
+
+Future AI
+
+Benefits
+
+Loose Coupling
+
+Async Processing
+
+Scalability
+
+---
+
+# Phase 12 — Notifications
+
+Email
+
+In-App
+
+Push (future)
+
+Events
+
+Expense Added
+
+Settlement
+
+Invitation
+
+Reminder
+
+Monthly Report
+
+Retry Failed Notifications
+
+Dead Letter Queue
+
+---
+
+# Phase 13 — Receipt Storage
+
+AWS S3
+
+Features
+
+Upload
+
+Compression
+
+Thumbnail
+
+Signed URL
+
+Validation
+
+Delete
+
+Benefits
+
+Cloud Storage
+
+Scalable Media
+
+---
+
+# Phase 14 — Search
+
+Search
+
+Expense
+
+Groups
+
+Users
+
+Categories
+
+Tags
+
+Future
+
+Elasticsearch
+
+Skills
+
+Search Architecture
+
+---
+
+# Phase 15 — Observability
+
+Logging
+
+Structured JSON Logs
+
+Request ID
+
+Correlation ID
+
+User ID
+
+Latency
+
+Metrics
+
+API Latency
+
+Requests/sec
+
+Memory
+
+CPU
+
+Cache Hit Ratio
+
+DB Query Time
+
+Tracing
+
+OpenTelemetry
+
+Flow
+
+API
+
+↓
+
+Redis
+
+↓
+
+DB
+
+↓
+
+Kafka
+
+↓
+
+S3
+
+Dashboard
+
+Grafana
+
+---
+
+# Phase 16 — Security
+
+Implement
+
+JWT
+
+Refresh Tokens
+
+CSRF
+
+CORS
+
+Input Validation
+
+SQL Injection Prevention
+
+XSS Prevention
+
+Rate Limiting
+
+Role Based Access
+
+Audit Logs
+
+Secret Management
+
+Encrypted Config
+
+Secure Cookies
+
+---
+
+# Phase 17 — Performance
+
+Optimize
+
+Indexes
+
+Batch Queries
+
+Pagination
+
+Cursor Pagination
+
+Avoid N+1 Queries
+
+Connection Pool
+
+Compression
+
+Lazy Loading
+
+Projection Queries
+
+Benchmark
+
+Before
+
+After
+
+---
+
+# Phase 18 — Testing
+
+Unit Tests
+
+Integration Tests
+
+Repository Tests
+
+Controller Tests
+
+Security Tests
+
+Performance Tests
+
+Load Tests
+
+Stress Tests
+
+Chaos Tests (future)
+
+Tools
+
+JUnit
+
+Mockito
+
+Testcontainers
+
+k6
+
+Coverage Goal
+
+80%+
+
+---
+
+# Phase 19 — DevOps
+
+Docker
+
+Docker Compose
+
+GitHub Actions
+
+CI/CD
+
+Environment Profiles
+
+Database Migration
+
+Flyway
+
+Health Checks
+
+Graceful Shutdown
+
+Rolling Restart Ready
+
+---
+
+# Phase 20 — AI Features
+
+These are enhancements, NOT the core.
+
+Receipt OCR
+
+Natural Language Expense Creation
+
+Example
+
+"Rahul paid ₹2400 for dinner shared equally among 4."
+
+Auto Categorization
+
+Duplicate Expense Detection
+
+Monthly Spending Summary
+
+AI Budget Suggestions
+
+AI should enhance productivity, not replace engineering.
+
+---
+
+# Phase 21 — Documentation
+
+Repository must include
+
+README
+
+Architecture Diagram
+
+ER Diagram
+
+Database Schema
+
+API Documentation
+
+Sequence Diagrams
+
+Deployment Guide
+
+Benchmark Results
+
+Load Test Results
+
+Caching Strategy
+
+Security Model
+
+Tradeoffs
+
+Future Improvements
+
+---
+
+# Phase 22 — Resume Metrics
+
+Never invent metrics.
+
+Measure everything.
+
+Examples
+
+API latency
+
+Requests/sec
+
+Memory usage
+
+CPU usage
+
+Cache hit ratio
+
+DB response time
+
+Concurrent users
+
+Throughput
+
+k6 results
+
+Redis improvement
+
+Index improvement
+
+Use real benchmark numbers in resume.
+
+---
+
+# Phase 23 — Production Mindset Checklist
+
+Can the service survive crashes?
+
+Can duplicate requests occur safely?
+
+Can cache failures be tolerated?
+
+Can database failures be handled?
+
+Can Redis go down?
+
+Can Kafka go down?
+
+Can S3 fail?
+
+Can deployment happen without downtime?
+
+Can logs explain failures?
+
+Can metrics identify bottlenecks?
+
+Can tracing locate latency?
+
+Can schema evolve safely?
+
+---
+
+# Phase 24 — Advanced (Stretch Goals)
+
+CQRS
+
+Outbox Pattern
+
+Saga Pattern
+
+Read Replicas
+
+Partitioning
+
+Sharding (conceptual)
+
+Feature Flags
+
+Blue-Green Deployment
+
+Canary Deployment
+
+Distributed Locking
+
+Dead Letter Queue
+
+Event Replay
+
+Snapshotting
+
+Materialized Views
+
+Circuit Breaker
+
+Bulkhead Pattern
+
+Retry with Exponential Backoff
+
+---
+
+# What Makes This Resume Worthy
+
+The project should allow discussions on:
+
+✔ Clean Architecture
+
+✔ Database Design
+
+✔ Transactions
+
+✔ Concurrency
+
+✔ Caching
+
+✔ Distributed Systems
+
+✔ Messaging
+
+✔ Performance
+
+✔ Security
+
+✔ Observability
+
+✔ DevOps
+
+✔ Testing
+
+✔ Scalability
+
+✔ System Design
+
+✔ Trade-offs
+
+✔ Production Engineering
+
+NOT merely CRUD operations.
+
+---
+
+# Success Criteria
+
+A recruiter should NOT think:
+
+> "Built another Splitwise clone."
+
+They should think:
+
+> "This candidate understands production backend engineering."
+
+An interviewer should be able to ask about:
+
+- ACID Transactions
+- Isolation Levels
+- Redis Cache Invalidation
+- Kafka Delivery Guarantees
+- Optimistic Locking
+- Min Cash Flow Algorithm
+- PostgreSQL Indexing
+- Query Optimization
+- Connection Pooling
+- Event-Driven Architecture
+- Observability
+- OpenTelemetry
+- Docker
+- CI/CD
+- Load Testing
+- Horizontal Scaling
+- Failure Recovery
+- Trade-offs
+
+and every answer should come from actual implementation experience rather than theoretical knowledge.
+
+---
+
+# Final Goal
+
+Baaki should represent the work of a backend engineer capable of building, operating, debugging, optimizing, and scaling production systems.
+
+It should be the strongest project on the resume and serve as the foundation for discussing backend engineering, distributed systems, and system design during interviews.

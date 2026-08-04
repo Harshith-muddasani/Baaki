@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -43,8 +44,8 @@ public class GroupController {
 	}
 
 	@GetMapping
-	public List<GroupResponse> listGroups() {
-		return groupService.listGroups().stream().map(GroupResponse::from).toList();
+	public List<GroupResponse> listGroups(@RequestParam(required = false) Long memberUserId) {
+		return groupService.listGroups(memberUserId).stream().map(GroupResponse::from).toList();
 	}
 
 	@PutMapping("/{id}")

@@ -11,7 +11,7 @@ import com.baaki.exception.BusinessRuleViolationException;
 import com.baaki.exception.ResourceNotFoundException;
 import com.baaki.repository.ExpenseRepository;
 import com.baaki.repository.ExpenseSplitRepository;
-import com.baaki.repository.GroupMemberRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,17 +27,20 @@ public class ExpenseService {
 
 	private final ExpenseRepository expenseRepository;
 	private final ExpenseSplitRepository expenseSplitRepository;
-	private final GroupMemberRepository groupMemberRepository;
+	private final GroupMemberService groupMemberService;
 	private final GroupService groupService;
 	private final UserService userService;
+	private final ApplicationEventPublisher eventPublisher;
 
 	public ExpenseService(ExpenseRepository expenseRepository, ExpenseSplitRepository expenseSplitRepository,
-			GroupMemberRepository groupMemberRepository, GroupService groupService, UserService userService) {
+			GroupMemberService groupMemberService, GroupService groupService, UserService userService,
+			ApplicationEventPublisher eventPublisher) {
 		this.expenseRepository = expenseRepository;
 		this.expenseSplitRepository = expenseSplitRepository;
-		this.groupMemberRepository = groupMemberRepository;
+		this.groupMemberService = groupMemberService;
 		this.groupService = groupService;
 		this.userService = userService;
+		this.eventPublisher = eventPublisher;
 	}
 
 	/**
@@ -49,12 +52,13 @@ public class ExpenseService {
 	public Expense createExpense(Long groupId, Long paidByUserId, String description, long totalAmount,
 			String currency, SplitType splitType, List<ExpenseParticipant> participants, Long createdByUserId) {
 		Group group = groupService.getGroup(groupId);
-		User paidBy = requireGroupMember(groupId, paidByUserId);
+		User paidBy = groupMemberService.requireGroupMember(groupId, paidByUserId);
 		User createdBy = userService.getUser(createdByUserId);
 
 		Map<Long, User> participantsById = new LinkedHashMap<>();
 		for (ExpenseParticipant participant : participants) {
-			participantsById.put(participant.userId(), requireGroupMember(groupId, participant.userId()));
+			participantsById.put(participant.userId(),
+					groupMemberService.requireGroupMember(groupId, participant.userId()));
 		}
 
 		List<Split> splits = calculateSplits(splitType, totalAmount, participants);
@@ -67,6 +71,7 @@ public class ExpenseService {
 				.toList();
 		expenseSplitRepository.saveAll(expenseSplits);
 
+		eventPublisher.publishEvent(new GroupActivityChangedEvent(groupId));
 		return expense;
 	}
 
@@ -96,6 +101,7 @@ public class ExpenseService {
 	public void deleteExpense(Long groupId, Long expenseId) {
 		Expense expense = getExpense(groupId, expenseId);
 		expense.softDelete();
+		eventPublisher.publishEvent(new GroupActivityChangedEvent(groupId));
 	}
 
 	private List<Split> calculateSplits(SplitType splitType, long totalAmount, List<ExpenseParticipant> participants) {
@@ -123,13 +129,5 @@ public class ExpenseService {
 			map.put(participant.userId(), value);
 		}
 		return map;
-	}
-
-	private User requireGroupMember(Long groupId, Long userId) {
-		User user = userService.getUser(userId);
-		if (!groupMemberRepository.existsByGroup_IdAndUser_Id(groupId, userId)) {
-			throw new BusinessRuleViolationException("User " + userId + " is not a member of group " + groupId);
-		}
-		return user;
 	}
 }

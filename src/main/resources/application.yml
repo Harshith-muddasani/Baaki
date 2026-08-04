@@ -17,10 +17,50 @@ spring:
 
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    # db/loadtest is a permanent 650k-row synthetic dataset (see
+    # docs/benchmarks.md) - real for the dev database, but deliberately
+    # excluded from the Testcontainers IT test's Flyway locations (see
+    # @TestPropertySource on ExpenseSettlementServiceApplicationIT) so every
+    # test run's fresh Postgres doesn't pay to insert it on every run.
+    locations: classpath:db/migration,classpath:db/loadtest
 
 server:
   port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+
+# Tracing via the OpenTelemetry project's own Spring Boot starter, not
+# Spring Boot's Micrometer bridge - that combination's autoconfiguration
+# never actually wired up an OTel Tracer bean in this Spring Boot version
+# (fell back to NoopTracerAutoConfiguration silently), verified by checking
+# /actuator/beans for a real Tracer. This is OTel's own SDK autoconfigure
+# module, independent of that bridge, and uses its own `otel.*` namespace.
+otel:
+  service:
+    name: expense-settlement-service
+  traces:
+    exporter: zipkin
+    sampler: always_on # 100% in dev; a real prod deployment would sample well below this
+  exporter:
+    zipkin:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+  metrics:
+    exporter: none # already have Micrometer + Prometheus for metrics
+  logs:
+    exporter: none # already have structured JSON logs via logback-spring.xml
 
 springdoc:
   swagger-ui:

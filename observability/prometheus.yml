@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: baaki-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      # The Spring Boot app runs on the host via `./gradlew bootRun`, not as
+      # a container in this compose file - host.docker.internal is Docker
+      # Desktop's route from inside a container back to the host.
+      - targets: ["host.docker.internal:8080"]
